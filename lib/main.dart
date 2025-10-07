@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:photo_viewer/ui/view_photo/view_photo_screen.dart';
+import 'package:photo_viewer/ui/filesystem_select/filesystem_select_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 void main() {
@@ -31,7 +32,8 @@ class MainApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         textTheme: GoogleFonts.robotoMonoTextTheme().apply(bodyColor: Colors.white, displayColor: Colors.white)
       ),
-      home: const ViewPhotoScreen(imagePath: "assets/images/testimage.JPG"),
+      //home: const ViewPhotoScreen(imagePath: "assets/images/testimage.JPG"),
+        home: FileSystemSelectScreen(),
     );
   }
 }
