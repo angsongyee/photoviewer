@@ -20,8 +20,10 @@ class _FileSystemSelectScreenState extends State<FileSystemSelectScreen> {
 
   void _launchFolderPickerIntent() async {
     final result = await platform.invokeMethod<String>('chooseDirectory');
+    final images = await platform.invokeMethod<List<dynamic>>('getImages', {"directoryUri": result});
+    print(images?.length);
     setState(() {
-      _directoryUri = result!;
+      _directoryUri = result ?? _directoryUri;
     });
   }
 

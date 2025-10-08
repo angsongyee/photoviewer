@@ -3,12 +3,13 @@ package com.songyee.photo_viewer
 import android.os.Bundle
 import androidx.core.view.WindowCompat
 import android.net.Uri
+import android.provider.DocumentsContract
 import androidx.activity.result.contract.ActivityResultContracts.OpenDocumentTree
-import androidx.annotation.NonNull
 import io.flutter.Log
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import androidx.core.net.toUri
 
 class MainActivity : FlutterFragmentActivity() {
     private val CHANNEL = "photoviewer/channels"
@@ -33,13 +34,63 @@ class MainActivity : FlutterFragmentActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler {
             // This method is invoked on the main thread.
                 call, result ->
-            if (call.method == "chooseDirectory") {
-                this.channelResult = result
-                getDirectoryIntent.launch(null)
-            } else {
-                result.notImplemented()
+            when (call.method) {
+                "chooseDirectory" -> {
+                    this.channelResult = result
+                    getDirectoryIntent.launch(null)
+                }
+                "getImages" -> {
+                    val directoryUriString = call.argument<String>("directoryUri")
+                    if (directoryUriString == null) {
+                        result.error("MISSING_ARG", "directoryUri argument is missing", null)
+                        return@setMethodCallHandler
+                    }
+                    // Call the new function to get image URIs
+                    val imageUris = getImagesInDirectory(directoryUriString)
+                    result.success(imageUris)
+                }
+                else -> {
+                    result.notImplemented()
+                }
             }
         }
+    }
+
+    private fun getImagesInDirectory(directoryUriString: String): List<String> {
+        val imageUris = mutableListOf<String>()
+        val directoryUri = directoryUriString.toUri()
+
+        val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
+            directoryUri,
+            DocumentsContract.getTreeDocumentId(directoryUri)
+        )
+
+        val projection = arrayOf(
+            DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+            DocumentsContract.Document.COLUMN_MIME_TYPE
+        )
+
+        contentResolver.query(
+            childrenUri,
+            projection,
+            null,
+            null,
+            null
+        )?.use { cursor ->
+            val idColumn = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DOCUMENT_ID)
+            val mimeTypeColumn = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_MIME_TYPE)
+
+            while (cursor.moveToNext()) {
+                val mimeType = cursor.getString(mimeTypeColumn)
+                if (mimeType != null && mimeType.startsWith("image/")) {
+                    val documentId = cursor.getString(idColumn)
+                    val documentUri = DocumentsContract.buildDocumentUriUsingTree(directoryUri, documentId)
+                    imageUris.add(documentUri.toString())
+                }
+            }
+        }
+
+        return imageUris
     }
 
 }
