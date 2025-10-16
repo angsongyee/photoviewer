@@ -5,17 +5,21 @@ class ExifData {
   final String focalLength;
   final String iso;
   final String shutterSpeed;
+  final String cameraModel;
 
-  ExifData(Map<String, IfdTag> rawExifValues) :
-        aperture = _parseAperture(rawExifValues['EXIF FNumber'].toString()),
-        focalLength = _parseFocalLength(rawExifValues['EXIF FocalLength'].toString()),
-        iso = _parseISO(rawExifValues['EXIF ISOSpeedRatings'].toString()),
-        shutterSpeed = rawExifValues['EXIF ExposureTime'].toString();
+  ExifData(Map<String, IfdTag> rawExifValues)
+    : aperture = _parseAperture(rawExifValues['EXIF FNumber'].toString()),
+      focalLength = _parseFocalLength(rawExifValues['EXIF FocalLength'].toString()),
+      iso = _parseISO(rawExifValues['EXIF ISOSpeedRatings'].toString()),
+      shutterSpeed = rawExifValues['EXIF ExposureTime'].toString(),
+      cameraModel = rawExifValues['Image Model'].toString();
+
 
   static Future<ExifData> fromBytes(List<int> bytes) async {
-    return ExifData(await readExifFromBytes(bytes));
+    var temp = await readExifFromBytes(bytes);
+    return ExifData(temp);
   }
-  
+
   static String _parseAperture(String input) {
     var values = input.split('/');
     var aperture = double.parse(values[0]) / double.parse(values[1]);
@@ -27,12 +31,15 @@ class ExifData {
   }
 
   static String _parseFocalLength(String input) {
-    return '${input}mm';
+    var values = input.split('/');
+    var focalLength = values.length == 2
+        ? double.parse(values[0]) / double.parse(values[1])
+        : double.parse(input);
+    return '${focalLength}mm';
   }
 
   @override
   String toString() {
     return '$focalLength $aperture $shutterSpeed $iso';
   }
-
 }

@@ -1,6 +1,7 @@
-import 'package:android_intent_plus/android_intent.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:photo_viewer/ui/gallery/gallery_screen.dart';
 
 class FileSystemSelectScreen extends StatefulWidget {
   const FileSystemSelectScreen({super.key});
@@ -11,7 +12,7 @@ class FileSystemSelectScreen extends StatefulWidget {
 
 class _FileSystemSelectScreenState extends State<FileSystemSelectScreen> {
   static const platform = MethodChannel('photoviewer/channels');
-  String _directoryUri = "No directory selected";
+  String? _directoryUri;
 
   // @override
   // void initState() {
@@ -20,11 +21,23 @@ class _FileSystemSelectScreenState extends State<FileSystemSelectScreen> {
 
   void _launchFolderPickerIntent() async {
     final result = await platform.invokeMethod<String>('chooseDirectory');
-    final images = await platform.invokeMethod<List<dynamic>>('getImages', {"directoryUri": result});
-    print(images?.length);
     setState(() {
       _directoryUri = result ?? _directoryUri;
     });
+  }
+
+  void _openFolder() {
+    if (_directoryUri == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Select a directory first!"),
+      ));
+      return;
+    }
+
+    Navigator.push(
+      context,
+      CupertinoPageRoute(builder: (_) => GalleryScreen(directoryUri: _directoryUri!))
+    );
   }
 
   @override
@@ -36,7 +49,8 @@ class _FileSystemSelectScreenState extends State<FileSystemSelectScreen> {
           onPressed: _launchFolderPickerIntent,
           child: Text("Pick Folder"),
         ),
-        Text(_directoryUri, style: Theme.of(context).textTheme.bodyLarge),
+        Text(_directoryUri ?? "No directory selected", style: Theme.of(context).textTheme.bodyLarge),
+        ElevatedButton(onPressed: _openFolder, child: Text("Open Folder")),
       ],
     );
   }

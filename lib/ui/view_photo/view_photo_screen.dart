@@ -1,12 +1,14 @@
+import 'dart:typed_data';
+
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'model/exif_data.dart';
 import 'package:photo_viewer/ui/view_photo/widget/fullscreen_image.dart';
 import 'package:photo_viewer/ui/view_photo/widget/bottom_info_sheet.dart';
 
 class ViewPhotoScreen extends StatefulWidget {
-  final String imagePath;
-
-  const ViewPhotoScreen({super.key, required this.imagePath});
+  final Uint8List imageBytes;
+  const ViewPhotoScreen({super.key, required this.imageBytes});
 
   @override
   State<StatefulWidget> createState() => _ViewPhotoScreenState();
@@ -18,26 +20,28 @@ class _ViewPhotoScreenState extends State<ViewPhotoScreen> {
   @override
   void initState() {
     super.initState();
-    _loadImageMetadata();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadImageMetadata();
+    });
+
   }
 
   void _loadImageMetadata() async {
-    var imageData = await DefaultAssetBundle.of(
-      context,
-    ).load("assets/images/testimage.JPG");
-    List<int> imageBytes = imageData.buffer.asUint8List() as List<int>;
-    imageMetadata = await ExifData.fromBytes(imageBytes);
-    print(imageMetadata);
-    setState(() {});
+    final result =  await ExifData.fromBytes(widget.imageBytes);
+    if (mounted) {
+      setState(() {
+        imageMetadata = result;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        FullScreen(image: AssetImage(widget.imagePath)),
+        FullScreenImage(image: widget.imageBytes),
         if (imageMetadata != null)
-          BottomInfoSheet(imageMetadata: imageMetadata!)
+          BottomInfoSheet(imageMetadata: imageMetadata!),
       ],
     );
   }

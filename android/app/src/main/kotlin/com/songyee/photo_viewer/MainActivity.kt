@@ -10,10 +10,15 @@ import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import androidx.core.net.toUri
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 
 class MainActivity : FlutterFragmentActivity() {
     private val CHANNEL = "photoviewer/channels"
     private var channelResult: MethodChannel.Result? = null
+
+    private val activityScope = MainScope();
     private val getDirectoryIntent = registerForActivityResult(OpenDocumentTree()) { uri: Uri? ->
         uri?.let {
             channelResult?.success(it.toString())
@@ -26,7 +31,6 @@ class MainActivity : FlutterFragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        //getDirectoryIntent.launch(null)
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -46,8 +50,26 @@ class MainActivity : FlutterFragmentActivity() {
                         return@setMethodCallHandler
                     }
                     // Call the new function to get image URIs
-                    val imageUris = getImagesInDirectory(directoryUriString)
-                    result.success(imageUris)
+                    activityScope.launch(Dispatchers.IO) {
+                        val imageUris = getImagesInDirectory(directoryUriString)
+                        result.success(imageUris)
+                    }
+                }
+                "getImageBytes" -> {
+                    val imageUriString = call.argument<String>("imageUri")
+                    if (imageUriString == null) {
+                        result.error("MISSING_ARG", "imageUri argument is missing", null)
+                        return@setMethodCallHandler
+                    }
+                    activityScope.launch(Dispatchers.IO) {
+                        val imageUri = imageUriString.toUri()
+                        val inputStream = contentResolver.openInputStream(imageUri)
+                        if (inputStream != null) {
+                            val bytes = inputStream.readBytes()
+                            inputStream.close()
+                            result.success(bytes)
+                        }
+                    }
                 }
                 else -> {
                     result.notImplemented()

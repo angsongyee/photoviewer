@@ -14,7 +14,7 @@ class BottomInfoSheet extends StatefulWidget {
 class _BottomInfoSheetState extends State<BottomInfoSheet> {
   final controller = DraggableScrollableController();
 
-  final double _initialChildSize = 0.5;
+  final double _initialChildSize = 0.11;
   final double _minChildSize = 0.11;
   final double _maxChildSize = 0.5;
 
@@ -73,7 +73,7 @@ class _BottomInfoSheetState extends State<BottomInfoSheet> {
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     Text(
-                      "ZV-E10",
+                      widget.imageMetadata.cameraModel,
                       style: Theme.of(context).textTheme.bodyLarge,
                     ),
                     Row(

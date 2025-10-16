@@ -1,19 +1,20 @@
 import 'dart:math';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
-class FullScreen extends StatefulWidget {
-  final ImageProvider image;
+class FullScreenImage extends StatefulWidget {
+  final Uint8List image;
 
-  const FullScreen({
+  const FullScreenImage({
     super.key,
     required this.image,
 });
 
   @override
-  State<StatefulWidget> createState() => _FullScreenState();
+  State<StatefulWidget> createState() => _FullScreenImageState();
 }
 
-class _FullScreenState extends State<FullScreen> {
+class _FullScreenImageState extends State<FullScreenImage> {
   double scaleLevel = 1.0;
   static const double kScaleFactor = 3.0;
   static const double kMaxDoubleTapScaleLevel = 9.0;
@@ -58,8 +59,8 @@ class _FullScreenState extends State<FullScreen> {
         transformationController: _controller,
         onInteractionUpdate: _handleInteractionUpdate,
         child: Center(
-          child: Image(
-            image: widget.image,
+          child: Image.memory(
+            widget.image,
             filterQuality: FilterQuality
                 .none, // Disable any scaling so that we can see the individual pixels
           ),
